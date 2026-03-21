@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -57,8 +56,8 @@ func main() {
 	http.HandleFunc("/add", add)
 	http.HandleFunc("/list", list)
 	http.HandleFunc("/", front)
+	http.HandleFunc("/delete-all", deleteAll)
 	fmt.Println("waiting for requests...")
-	go resetTasksDaily()
 	http.ListenAndServe(":8080", nil)
 }
 
@@ -111,6 +110,16 @@ func list(w http.ResponseWriter, r *http.Request) {
 	if err := rows.Err(); err != nil {
 		fmt.Fprintf(w, "Loading error: %v\n", err)
 	}
+}
+
+func deleteAll(w http.ResponseWriter, r *http.Request) {
+	_, err := db.Exec("TRUNCATE TABLE tasks")
+	if err != nil {
+		fmt.Printf("Delete failed: %v\n", err)
+		http.Error(w, "Delete failed", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func front(w http.ResponseWriter, r *http.Request) {
@@ -201,7 +210,9 @@ func front(w http.ResponseWriter, r *http.Request) {
 				%s
 			</div>
 
-			<button class="btn-delete">Delete Selected</button>
+			<form action="/delete-all" method="GET" onsubmit="return confirm('本当に全てのタスクを削除しますか？');">
+				<button type="submit" class="btn-delete">Delete All</button>
+			</form>
 
 			<button class="btn-sm" onclick="location.href='https://www.youtube.com/watch?v=wBf47hGMch0'">SM</button>
 			<div class="bottom-buttons">
@@ -226,24 +237,4 @@ func front(w http.ResponseWriter, r *http.Request) {
 	`, tasksHTML)
 
 	fmt.Fprint(w, html)
-}
-
-func resetTasksDaily() {
-	for {
-		now := time.Now()
-		next := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
-		duration := next.Sub(now)
-
-		fmt.Printf("次のリセットまで待機します: %v\n", duration)
-		
-		time.Sleep(duration)
-
-		_, err := db.Exec("TRUNCATE TABLE tasks")
-
-		if err != nil {
-			log.Println("タスクのリセットに失敗しました:", err)
-		} else {
-			fmt.Println("深夜0時になったため、タスクをリセットしました")
-		}
-	}
 }
