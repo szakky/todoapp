@@ -56,6 +56,7 @@ func main() {
     fmt.Println("ready")
 
 	http.HandleFunc("/top", topPage)
+	http.HandleFunc("/login", enterRoom)
 
 	http.HandleFunc("/add", add)
 	http.HandleFunc("/list", list)
@@ -96,6 +97,16 @@ func topPage(w http.ResponseWriter, r *http.Request) {
     </body>
     </html>`
 	fmt.Fprint(w, html)
+}
+
+func enterRoom(w http.ResponseWriter, r *http.Request) {
+	roomID := r.FormValue("room_id")
+	if roomID == "" {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	http.Redirect(w, r, "/"+roomID, http.StatusSeeOther)
 }
 
 func add(w http.ResponseWriter, r *http.Request) {
