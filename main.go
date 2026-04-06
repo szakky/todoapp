@@ -30,7 +30,7 @@ func main() {
 
 	http.HandleFunc("/top", topPage)
 	http.HandleFunc("/login", enterRoom)
-	http.HandleFunc("/", roomPage)
+	http.HandleFunc("/room/", roomPage)
 	http.HandleFunc("/add", add)
 	http.HandleFunc("/list", list)
 	http.HandleFunc("/update", updateTask)
@@ -48,9 +48,11 @@ type TaskView struct {
 	TagColor   string
 }
 
-type FrontPageData struct {
+type RoomPageData struct {
 	StreakCount int
 	Tasks       []TaskView
+	RoomID      string
+
 }
 
 func roomPage(w http.ResponseWriter, r *http.Request) {
@@ -58,8 +60,9 @@ func roomPage(w http.ResponseWriter, r *http.Request) {
 
 	jst := time.FixedZone("JST", 9*60*60)
 	todayStr := time.Now().In(jst).Format("2006-01-02")
+	roomID := r.URL.Query().Get("room_id")
 
-	rows, err := conn.Query("SELECT id, title, categorize, memo FROM tasks WHERE done = 0 AND DATE(created_at) = ?", todayStr)
+	rows, err := conn.Query("SELECT id, title, categorize, COALESCE(memo, '') FROM tasks WHERE done = 0 AND DATE(created_at) = ? AND room_id = ?", todayStr, roomID)
 	if err != nil {
 		http.Error(w, "DB Error", http.StatusInternalServerError)
 		return
@@ -81,9 +84,10 @@ func roomPage(w http.ResponseWriter, r *http.Request) {
 		tasks = append(tasks, t)
 	}
 
-	data := FrontPageData{
+	data := RoomPageData{
 		StreakCount: streakCount,
 		Tasks:       tasks,
+		RoomID:      r.URL.Query().Get("room_id"),
 	}
 
 	tmpl, err := template.ParseFiles("templates/room.html")

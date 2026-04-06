@@ -36,6 +36,7 @@
         <div class="streak-banner">🔥 {{.StreakCount}}日継続中!! 🔥</div>
 
         <form action="/add" method="GET" class="input-form">
+            <input type="hidden" name="room_id" value="{{$.RoomID}}">
             <input type="text" name="title" placeholder="Enter a task" required>
             <input type="hidden" name="categorize" value="">
             <button type="submit">Add</button>
@@ -56,12 +57,13 @@
                                 </span>
                                 {{end}}
                             </div>
-                            <a href="/delete?id={{.ID}}" onclick="event.stopPropagation(); return confirm('このタスクを削除しますか？');" style="color: #ff3b30; font-size: 14px; font-weight: bold; text-decoration: none; padding: 4px 8px; border: 1px solid #ff3b30; border-radius: 4px;">Delete</a>
+                            <a href="/delete?id={{.ID}}&room_id={{$.RoomID}}" onclick="event.stopPropagation(); return confirm('このタスクを削除しますか？');" style="color: #ff3b30; font-size: 14px; font-weight: bold; text-decoration: none; padding: 4px 8px; border: 1px solid #ff3b30; border-radius: 4px;">Delete</a>
                         </div>
 
                         <div id="details-{{.ID}}" class="task-details" style="display: none;" onclick="event.stopPropagation()">
-                            <form action="/update-task" method="GET" style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
+                            <form action="/update" method="GET" style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
                                 <input type="hidden" name="id" value="{{.ID}}">
+                                <input type="hidden" name="room_id" value="{{$.RoomID}}">
 
                                 <div style="display: flex; align-items: center; gap: 5px;">
                                     <span class="label" style="width: 50px;">TAG:</span>

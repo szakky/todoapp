@@ -32,7 +32,7 @@ func enterRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/"+roomID, http.StatusSeeOther)
+	http.Redirect(w, r, "/?room_id="+roomID, http.StatusSeeOther)
 }
 
 func add(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +47,7 @@ func add(w http.ResponseWriter, r *http.Request) {
 		done = true
 	}
 
-	_, err := conn.Exec("INSERT INTO tasks (title, categorize, memo,done) VALUES (?, ?, ?, ?)", title, categorize, memo, done)
+	_, err := conn.Exec("INSERT INTO tasks (title, categorize, memo, done, room_id) VALUES (?, ?, ?, ?, ?)", title, categorize, memo, done, roomID)
 	if err != nil {
 		fmt.Printf("Added failed: %v\n", err)
 		http.Error(w,"Added failed", http.StatusInternalServerError)
@@ -59,11 +59,12 @@ func add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w,r,"/"+roomID, http.StatusSeeOther)
+	http.Redirect(w,r, "/?room_id="+roomID, http.StatusSeeOther)
 }
 
 func list(w http.ResponseWriter, r *http.Request) {
-	rows,err := conn.Query("SELECT id, title, categorize, memo, done FROM tasks WHERE done = 0")
+	roomID := r.URL.Query().Get("room_id")
+	rows,err := conn.Query("SELECT id, title, categorize, memo, done FROM tasks WHERE done = 0 AND room_id = ?", roomID)
 	if err != nil {
 		fmt.Fprintf(w,"Loading error: %v\n", err)
 		return
@@ -104,13 +105,13 @@ func updateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = conn.Exec("UPDATE tasks SET memo = ?, categorize = ? WHERE id = ?", memo, categorize, id)
+	_, err = conn.Exec("UPDATE tasks SET memo = ?, categorize = ? WHERE id = ? AND room_id = ?", memo, categorize, id, roomID)
 	if err != nil {
 		http.Error(w, "failed to update task", http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, "/"+roomID, http.StatusSeeOther)
+	http.Redirect(w, r, "/?room_id="+roomID, http.StatusSeeOther)
 }
 
 func deleteTask(w http.ResponseWriter, r *http.Request) {
@@ -123,23 +124,23 @@ func deleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = conn.Exec("DELETE FROM tasks WHERE id = ?", id)
+	_, err = conn.Exec("DELETE FROM tasks WHERE id = ? AND room_id = ?", id, roomID)
 	if err != nil {
 		http.Error(w, "failed to delete task", http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, "/"+roomID, http.StatusSeeOther)
+	http.Redirect(w, r, "/?room_id="+roomID, http.StatusSeeOther)
 }
 
 func deleteAll(w http.ResponseWriter, r *http.Request) {
 	roomID := r.URL.Query().Get("room_id")
 
-	_, err := conn.Exec("TRUNCATE TABLE tasks")
+	_, err := conn.Exec("DELETE FROM tasks WHERE room_id = ?", roomID)
 	if err != nil {
 		fmt.Printf("Delete failed: %v\n", err)
 		http.Error(w, "Delete failed", http.StatusInternalServerError)
 		return
 	}
-	http.Redirect(w, r, "/"+roomID, http.StatusSeeOther)
+	http.Redirect(w, r, "/?room_id="+roomID, http.StatusSeeOther)
 }
