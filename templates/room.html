@@ -8,7 +8,6 @@
         body { font-family: sans-serif; background-color: #f5f5f7; padding: 20px; display: flex; justify-content: center; }
         .app-container { width: 100%; max-width: 400px; }
         
-        /* ヘッダー部分のスタイル（追加） */
         .header-actions {
             display: flex;
             justify-content: space-between;
@@ -88,7 +87,7 @@
                             <div style="display: flex; align-items: center;">
                                 {{.Title}}
                                 {{if .Categorize}}
-                                <span style="background-color: #007aff; color: white; font-size: 12px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-left: 10px;">
+                                <span style="background-color: {{.TagColor}}; color: white; font-size: 12px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-left: 10px;">
                                     {{.Categorize}}
                                 </span>
                                 {{end}}
