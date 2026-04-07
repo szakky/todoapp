@@ -62,37 +62,6 @@ func add(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w,r, "/?room_id="+roomID, http.StatusSeeOther)
 }
 
-func list(w http.ResponseWriter, r *http.Request) {
-	roomID := r.URL.Query().Get("room_id")
-	rows,err := conn.Query("SELECT id, title, categorize, memo, done FROM tasks WHERE done = 0 AND room_id = ?", roomID)
-	if err != nil {
-		fmt.Fprintf(w,"Loading error: %v\n", err)
-		return
-	}
-	defer rows.Close()
-
-	fmt.Fprintln(w, "--All Tasks--:")
-
-	for rows.Next() {
-		var id int
-		var title string
-		var categorize string
-		var memo string
-		var done bool
-		
-		if err := rows.Scan(&id, &title, &categorize, &memo, &done); err != nil {
-			fmt.Fprintf(w, "Loading error: %v\n", err)
-			return
-		}
-
-		fmt.Fprintf(w, "%d: %s (Categorize: %s, Memo: %s, Done: %v)\n", id, title, categorize, memo, done)
-	}
-
-	if err := rows.Err(); err != nil {
-		fmt.Fprintf(w, "Loading error: %v\n", err)
-	}
-}
-
 func updateTask(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	memo := r.URL.Query().Get("memo")

@@ -37,6 +37,7 @@ func Connect() (*sql.DB, error) {
 		categorize VARCHAR(255) NOT NULL,
 		done BOOLEAN NOT NULL DEFAULT FALSE,
 		memo TEXT,
+		room_id VARCHAR(255) NOT NULL,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);`
 

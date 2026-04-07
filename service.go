@@ -50,6 +50,8 @@ func getStreak(db *sql.DB) int {
 	}
 
 	return streak
+
+	
 }
 
 func getColorForTag(tag string) string {

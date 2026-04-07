@@ -32,7 +32,6 @@ func main() {
 	http.HandleFunc("/login", enterRoom)
 	http.HandleFunc("/", roomPage)
 	http.HandleFunc("/add", add)
-	http.HandleFunc("/list", list)
 	http.HandleFunc("/update", updateTask)
 	http.HandleFunc("/delete", deleteTask)
 	http.HandleFunc("/delete-all", deleteAll)
