@@ -1,23 +1,45 @@
 package main
 
 import (
-	"net/http"
-	"log"
-	"html/template"
 	"fmt"
+	"html/template"
+	"log"
+	"net/http"
 	"strconv"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func topPage(w http.ResponseWriter, r *http.Request) {
+	rows, err := conn.Query("SELECT room_id FROM room_history ORDER BY last_accessed DESC LIMIT 10")
+	if err != nil {
+		http.Error(w, "DB Error", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var roomHistory []string
+	for rows.Next() {
+		var roomID string
+		if err := rows.Scan(&roomID); err != nil {
+			http.Error(w, "DB Error", http.StatusInternalServerError)
+			return
+		}
+		roomHistory = append(roomHistory, roomID)
+	}
+
 	tmpl, err := template.ParseFiles("templates/top.html")
 	if err != nil {
 		http.Error(w, "parse Error", http.StatusInternalServerError)
 		log.Println("parse error:", err)
 		return
 	}
-	err = tmpl.Execute(w, nil)
+
+	data := map[string]interface{}{
+		"RoomHistory": roomHistory,
+	}
+
+	err = tmpl.Execute(w, data)
 	if err != nil {
 		http.Error(w, "execute Error", http.StatusInternalServerError)
 		log.Println("execute error:", err)
@@ -30,6 +52,11 @@ func enterRoom(w http.ResponseWriter, r *http.Request) {
 	if roomID == "" {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
+	}
+
+	_, err := conn.Exec("INSERT INTO room_history (room_id) VALUES (?) ON DUPLICATE KEY UPDATE last_accessed = CURRENT_TIMESTAMP", roomID)
+	if err != nil {
+		fmt.Printf("Failed to record room history: %v\n", err)
 	}
 
 	http.Redirect(w, r, "/room/?room_id="+roomID, http.StatusSeeOther)
@@ -50,22 +77,22 @@ func add(w http.ResponseWriter, r *http.Request) {
 	_, err := conn.Exec("INSERT INTO tasks (title, categorize, memo, done, room_id) VALUES (?, ?, ?, ?, ?)", title, categorize, memo, done, roomID)
 	if err != nil {
 		fmt.Printf("Added failed: %v\n", err)
-		http.Error(w,"Added failed", http.StatusInternalServerError)
+		http.Error(w, "Added failed", http.StatusInternalServerError)
 		return
 	}
-	
+
 	if roomID == "" {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
-	http.Redirect(w,r, "/room/?room_id="+roomID, http.StatusSeeOther)
+	http.Redirect(w, r, "/room/?room_id="+roomID, http.StatusSeeOther)
 }
 
 func updateTask(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	memo := r.URL.Query().Get("memo")
-	categorize := r.URL.Query().Get("categorize") 
+	categorize := r.URL.Query().Get("categorize")
 	roomID := r.URL.Query().Get("room_id")
 
 	id, err := strconv.Atoi(idStr)

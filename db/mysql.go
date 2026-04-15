@@ -46,5 +46,17 @@ func Connect() (*sql.DB, error) {
 		return nil, err
 	}
 
+	roomHistorySQL := `
+	CREATE TABLE IF NOT EXISTS room_history (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		room_id VARCHAR(255) NOT NULL UNIQUE,
+		last_accessed DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+	);`
+
+	_, err = db.Exec(roomHistorySQL)
+	if err != nil {
+		return nil, err
+	}
+
 	return db, nil
 }
