@@ -37,17 +37,6 @@
             background-color: #d70015;
         }
 
-        .streak-banner {
-            background: linear-gradient(135deg, #ff9500, #ff3b30);
-            color: white;
-            text-align: center;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(255, 59, 48, 0.3);
-        }
         .input-form { display: flex; gap: 10px; margin-bottom: 30px; }
         .input-form input[type="text"] { flex-grow: 1; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; }
         .input-form button { padding: 12px 20px; background-color: #e5e5ea; color: #007aff; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; }
@@ -59,6 +48,7 @@
         .task-title { font-weight: bold; }
         .task-details { margin-top: 10px; font-size: 14px; color: #555; background-color: #f0f0f5; padding: 10px; border-radius: 8px; border-left: 4px solid #007aff; }
         .label { font-weight: bold; color: #333; font-size: 12px; text-transform: uppercase; }
+        .task-tag { color: white; font-size: 12px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-left: 10px; }
     </style>
 </head>
 <body>
@@ -67,8 +57,6 @@
             <a href="/" class="home-button" title="トップページへ戻る">🏠</a>
             <a href="/delete-all?room_id={{$.RoomID}}" class="delete-all-button" onclick="return confirm('本当にすべてのタスクを削除しますか？');">Delete All</a>
         </div>
-
-        <div class="streak-banner">🔥 {{.StreakCount}}日継続中!! 🔥</div>
 
         <form action="/add" method="GET" class="input-form">
             <input type="hidden" name="room_id" value="{{$.RoomID}}">
@@ -87,7 +75,7 @@
                             <div style="display: flex; align-items: center;">
                                 {{.Title}}
                                 {{if .Categorize}}
-                                <span style="background-color: {{.TagColor}}; color: white; font-size: 12px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-left: 10px;">
+                                <span class="task-tag" data-color="{{.TagColor}}">
                                     {{.Categorize}}
                                 </span>
                                 {{end}}
@@ -132,6 +120,11 @@
                     }
                 }
             }
+
+            // Apply dynamic background colors to task tags
+            document.querySelectorAll('.task-tag[data-color]').forEach(el => {
+                el.style.backgroundColor = el.getAttribute('data-color');
+            });
         </script>
     </div>
 </body>

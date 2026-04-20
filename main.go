@@ -3,11 +3,11 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"time"
 	"todo-api/db"
-	"html/template"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -26,7 +26,7 @@ func main() {
 		log.Fatal("db error:", err)
 	}
 	fmt.Println("db connected")
-    fmt.Println("ready")
+	fmt.Println("ready")
 
 	http.HandleFunc("/", topPage)
 	http.HandleFunc("/login", enterRoom)
@@ -47,15 +47,7 @@ type TaskView struct {
 	TagColor   string
 }
 
-type RoomPageData struct {
-	StreakCount int
-	Tasks       []TaskView
-	RoomID      string
-
-}
-
 func roomPage(w http.ResponseWriter, r *http.Request) {
-	streakCount := getStreak(conn)
 
 	jst := time.FixedZone("JST", 9*60*60)
 	todayStr := time.Now().In(jst).Format("2006-01-02")
@@ -83,17 +75,19 @@ func roomPage(w http.ResponseWriter, r *http.Request) {
 		tasks = append(tasks, t)
 	}
 
-	data := RoomPageData{
-		StreakCount: streakCount,
-		Tasks:       tasks,
-		RoomID:      r.URL.Query().Get("room_id"),
-	}
-
 	tmpl, err := template.ParseFiles("templates/room.html")
 	if err != nil {
 		http.Error(w, "template parse error", http.StatusInternalServerError)
 		log.Println("template parse error:", err)
 		return
+	}
+
+	data := struct {
+		Tasks  []TaskView
+		RoomID string
+	}{
+		Tasks:  tasks,
+		RoomID: roomID,
 	}
 
 	if err := tmpl.Execute(w, data); err != nil {
