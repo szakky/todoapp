@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -18,9 +17,7 @@ func topPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := map[string]interface{}{}
-
-	err = tmpl.Execute(w, data)
+	err = tmpl.Execute(w, nil)
 	if err != nil {
 		http.Error(w, "execute Error", http.StatusInternalServerError)
 		log.Println("execute error:", err)
@@ -52,7 +49,7 @@ func add(w http.ResponseWriter, r *http.Request) {
 
 	_, err := conn.Exec("INSERT INTO tasks (title, categorize, memo, done, room_id) VALUES (?, ?, ?, ?, ?)", title, categorize, memo, done, roomID)
 	if err != nil {
-		fmt.Printf("Added failed: %v\n", err)
+		log.Printf("Added failed: %v\n", err)
 		http.Error(w, "Added failed", http.StatusInternalServerError)
 		return
 	}
@@ -110,7 +107,7 @@ func deleteAll(w http.ResponseWriter, r *http.Request) {
 
 	_, err := conn.Exec("DELETE FROM tasks WHERE room_id = ?", roomID)
 	if err != nil {
-		fmt.Printf("Delete failed: %v\n", err)
+		log.Printf("Delete failed: %v\n", err)
 		http.Error(w, "Delete failed", http.StatusInternalServerError)
 		return
 	}

@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -25,8 +24,8 @@ func main() {
 	if err = conn.Ping(); err != nil {
 		log.Fatal("db error:", err)
 	}
-	fmt.Println("db connected")
-	fmt.Println("ready")
+	log.Println("db connected")
+	log.Println("ready")
 
 	http.HandleFunc("/", topPage)
 	http.HandleFunc("/login", enterRoom)
@@ -35,7 +34,7 @@ func main() {
 	http.HandleFunc("/update", updateTask)
 	http.HandleFunc("/delete", deleteTask)
 	http.HandleFunc("/delete-all", deleteAll)
-	fmt.Println("waiting for requests...")
+	log.Println("waiting for requests...")
 	http.ListenAndServe(":8080", nil)
 }
 
