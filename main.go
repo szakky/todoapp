@@ -2,10 +2,8 @@ package main
 
 import (
 	"database/sql"
-	"html/template"
 	"log"
 	"net/http"
-	"time"
 	"todo-api/db"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -38,60 +36,22 @@ func main() {
 	http.ListenAndServe(":8080", nil)
 }
 
-type TaskView struct {
-	ID         int
-	Title      string
-	Categorize string
-	Memo       string
-	TagColor   string
-}
-
-func roomPage(w http.ResponseWriter, r *http.Request) {
-
-	jst := time.FixedZone("JST", 9*60*60)
-	todayStr := time.Now().In(jst).Format("2006-01-02")
-	roomID := r.URL.Query().Get("room_id")
-
-	rows, err := conn.Query("SELECT id, title, categorize, COALESCE(memo, '') FROM tasks WHERE done = 0 AND DATE(created_at) = ? AND room_id = ?", todayStr, roomID)
-	if err != nil {
-		http.Error(w, "DB Error", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-
-	var tasks []TaskView
-	for rows.Next() {
-		var t TaskView
-		if err := rows.Scan(&t.ID, &t.Title, &t.Categorize, &t.Memo); err != nil {
-			http.Error(w, "DB Error", http.StatusInternalServerError)
-			return
-		}
-
-		if t.Categorize != "" {
-			t.TagColor = getColorForTag(t.Categorize)
-		}
-
-		tasks = append(tasks, t)
+func getColorForTag(tag string) string {
+	colors := []string{
+		"#007aff", // ブルー
+		"#34c759", // グリーン
+		"#ff9500", // オレンジ
+		"#ff3b30", // レッド
+		"#af52de", // パープル
+		"#5856d6", // インディゴ
+		"#ff2d55", // ピンク
+		"#00c7be", // ティール（青緑）
 	}
 
-	tmpl, err := template.ParseFiles("templates/room.html")
-	if err != nil {
-		http.Error(w, "template parse error", http.StatusInternalServerError)
-		log.Println("template parse error:", err)
-		return
+	var hash int
+	for _, char := range tag {
+		hash += int(char)
 	}
-
-	data := struct {
-		Tasks  []TaskView
-		RoomID string
-	}{
-		Tasks:  tasks,
-		RoomID: roomID,
-	}
-
-	if err := tmpl.Execute(w, data); err != nil {
-		http.Error(w, "template execute error", http.StatusInternalServerError)
-		log.Println("template execute error:", err)
-		return
-	}
+	
+	return colors[hash%len(colors)]
 }

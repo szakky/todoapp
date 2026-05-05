@@ -35,7 +35,6 @@ func Connect() (*sql.DB, error) {
 		id INT AUTO_INCREMENT PRIMARY KEY,
 		title VARCHAR(255) NOT NULL,
 		categorize VARCHAR(255) NOT NULL,
-		done BOOLEAN NOT NULL DEFAULT FALSE,
 		memo TEXT,
 		room_id VARCHAR(255) NOT NULL,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP

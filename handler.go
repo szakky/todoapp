@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -35,19 +36,71 @@ func enterRoom(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/room/?room_id="+roomID, http.StatusSeeOther)
 }
 
+type TaskView struct {
+	ID         int
+	Title      string
+	Categorize string
+	Memo       string
+	TagColor   string
+}
+
+func roomPage(w http.ResponseWriter, r *http.Request) {
+
+	jst := time.FixedZone("JST", 9*60*60)
+	todayStr := time.Now().In(jst).Format("2006-01-02")
+	roomID := r.URL.Query().Get("room_id")
+
+	rows, err := conn.Query("SELECT id, title, categorize, COALESCE(memo, '') FROM tasks WHERE done = 0 AND DATE(created_at) = ? AND room_id = ?", todayStr, roomID)
+	if err != nil {
+		http.Error(w, "DB Error", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var tasks []TaskView
+	for rows.Next() {
+		var t TaskView
+		if err := rows.Scan(&t.ID, &t.Title, &t.Categorize, &t.Memo); err != nil {
+			http.Error(w, "DB Error", http.StatusInternalServerError)
+			return
+		}
+
+		if t.Categorize != "" {
+			t.TagColor = getColorForTag(t.Categorize)
+		}
+
+		tasks = append(tasks, t)
+	}
+
+	tmpl, err := template.ParseFiles("templates/room.html")
+	if err != nil {
+		http.Error(w, "template parse error", http.StatusInternalServerError)
+		log.Println("template parse error:", err)
+		return
+	}
+
+	data := struct {
+		Tasks  []TaskView
+		RoomID string
+	}{
+		Tasks:  tasks,
+		RoomID: roomID,
+	}
+
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, "template execute error", http.StatusInternalServerError)
+		log.Println("template execute error:", err)
+		return
+	}
+}
+
 func add(w http.ResponseWriter, r *http.Request) {
 	title := r.URL.Query().Get("title")
 	categorize := r.URL.Query().Get("categorize")
 	memo := r.URL.Query().Get("memo")
-	doneGet := r.URL.Query().Get("done")
 	roomID := r.URL.Query().Get("room_id")
 
-	done := false
-	if doneGet == "true" {
-		done = true
-	}
-
-	_, err := conn.Exec("INSERT INTO tasks (title, categorize, memo, done, room_id) VALUES (?, ?, ?, ?, ?)", title, categorize, memo, done, roomID)
+	_, err := conn.Exec("INSERT INTO tasks (title, categorize, memo, room_id) VALUES (?, ?, ?, ?)", title, categorize, memo, roomID)
 	if err != nil {
 		log.Printf("Added failed: %v\n", err)
 		http.Error(w, "Added failed", http.StatusInternalServerError)
